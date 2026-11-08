@@ -214,6 +214,20 @@ func containsGenre(genres []string, selected string) bool {
 	return false
 }
 
+func existingAlbumFolders(destination string, albums []Album) ([]string, error) {
+	var existing []string
+	for _, album := range albums {
+		path := filepath.Join(destination, album.Name)
+		_, err := os.Stat(path)
+		if err == nil {
+			existing = append(existing, album.Name)
+		} else if !os.IsNotExist(err) {
+			return nil, fmt.Errorf("check destination %s: %w", path, err)
+		}
+	}
+	return existing, nil
+}
+
 func copyDirectory(ctx context.Context, source, destination string) error {
 	return filepath.WalkDir(source, func(path string, entry fs.DirEntry, walkErr error) error {
 		if walkErr != nil {

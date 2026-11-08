@@ -4,148 +4,129 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
-	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 
-	"github.com/lxn/walk"
-	. "github.com/lxn/walk/declarative"
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/widget"
 )
 
 type copierWindow struct {
-	mainWindow        *walk.MainWindow
-	sourceEntry       *walk.LineEdit
-	destinationEntry  *walk.LineEdit
-	filterCombo       *walk.ComboBox
-	albumList         *walk.ListBox
-	statusLabel       *walk.Label
-	progressBar       *walk.ProgressBar
-	scanButton        *walk.PushButton
-	copyButton        *walk.PushButton
-	cancelButton      *walk.PushButton
-	sourceBrowse      *walk.PushButton
-	destinationBrowse *walk.PushButton
-	selectVisible     *walk.PushButton
-	clearSelection    *walk.PushButton
-
-	albums       []Album
-	visible      []Album
-	selected     map[string]bool
-	updatingList bool
-	cancelCopy   context.CancelFunc
+	window            fyne.Window
+	sourceEntry       *widget.Entry
+	destinationEntry  *widget.Entry
+	filterSelect      *widget.Select
+	albumList         *widget.CheckGroup
+	statusLabel       *widget.Label
+	progressBar       *widget.ProgressBar
+	scanButton        *widget.Button
+	copyButton        *widget.Button
+	cancelButton      *widget.Button
+	sourceBrowse      *widget.Button
+	destinationBrowse *widget.Button
+	selectVisible     *widget.Button
+	clearSelection    *widget.Button
+	albums            []Album
+	visible           []Album
+	selected          map[string]bool
+	updatingList      bool
+	cancelCopy        context.CancelFunc
 }
 
 func main() {
-	ui := &copierWindow{selected: make(map[string]bool)}
-	if _, err := (MainWindow{
-		AssignTo: &ui.mainWindow,
-		Title:    "Music Album Copier",
-		MinSize:  Size{Width: 720, Height: 580},
-		Size:     Size{Width: 780, Height: 680},
-		Layout:   VBox{},
-		Children: []Widget{
-			Label{
-				Text:      "Copy MP3 album folders to a USB drive",
-				Font:      Font{Family: "Segoe UI", PointSize: 12, Bold: true},
-				Alignment: AlignHNearVCenter,
-			},
-			Label{Text: "Music library folder"},
-			Composite{
-				Layout: HBox{},
-				Children: []Widget{
-					LineEdit{AssignTo: &ui.sourceEntry},
-					PushButton{AssignTo: &ui.sourceBrowse, Text: "Browse...", OnClicked: ui.browseSource},
-				},
-			},
-			PushButton{AssignTo: &ui.scanButton, Text: "Scan albums", OnClicked: ui.scanAlbums},
-			Label{Text: "USB drive destination folder"},
-			Composite{
-				Layout: HBox{},
-				Children: []Widget{
-					LineEdit{AssignTo: &ui.destinationEntry},
-					PushButton{AssignTo: &ui.destinationBrowse, Text: "Browse...", OnClicked: ui.browseDestination},
-				},
-			},
-			Label{Text: "Filter albums by genre. Use Ctrl+click to select multiple albums."},
-			Composite{
-				Layout: HBox{},
-				Children: []Widget{
-					Label{Text: "Genre:"},
-					ComboBox{
-						AssignTo: &ui.filterCombo,
-						Model:    []string{"All genres"},
-						OnCurrentIndexChanged: func() {
-							ui.renderAlbums()
-						},
-					},
-					PushButton{AssignTo: &ui.selectVisible, Text: "Select visible", OnClicked: ui.selectVisibleAlbums},
-					PushButton{AssignTo: &ui.clearSelection, Text: "Clear selection", OnClicked: ui.clearAlbums},
-				},
-			},
-			ListBox{
-				AssignTo:                 &ui.albumList,
-				Model:                    []string{},
-				MultiSelection:           true,
-				StretchFactor:            1,
-				OnSelectedIndexesChanged: ui.selectionChanged,
-			},
-			Composite{
-				Layout: HBox{},
-				Children: []Widget{
-					PushButton{AssignTo: &ui.copyButton, Text: "Copy selected albums", OnClicked: ui.copySelected},
-					PushButton{AssignTo: &ui.cancelButton, Text: "Cancel copy", OnClicked: ui.cancelCurrentCopy},
-				},
-			},
-			ProgressBar{AssignTo: &ui.progressBar, MinValue: 0, MaxValue: 100},
-			Label{AssignTo: &ui.statusLabel, Text: "Choose your music library folder, then scan for albums."},
-		},
-	}).Run(); err != nil {
-		log.Fatal(err)
+	application := app.NewWithID("com.musicalbumcopier.app")
+	window := application.NewWindow("Music Album Copier")
+	window.Resize(fyne.NewSize(800, 680))
+
+	ui := &copierWindow{
+		window:   window,
+		selected: make(map[string]bool),
 	}
-	if ui.cancelCopy != nil {
-		ui.cancelCopy()
-	}
+	ui.build()
+	window.SetOnClosed(func() {
+		if ui.cancelCopy != nil {
+			ui.cancelCopy()
+		}
+	})
+	window.ShowAndRun()
 }
 
-func (ui *copierWindow) browseSource() {
-	dialog := &walk.FileDialog{Title: "Select your music library folder", InitialDirPath: ui.sourceEntry.Text()}
-	accepted, err := dialog.ShowBrowseFolder(ui.mainWindow)
-	if err != nil {
-		ui.showError(err)
-		return
-	}
-	if accepted {
-		ui.sourceEntry.SetText(dialog.FilePath)
-	}
+func (ui *copierWindow) build() {
+	ui.sourceEntry = widget.NewEntry()
+	ui.sourceEntry.SetPlaceHolder("Select your music library folder")
+	ui.destinationEntry = widget.NewEntry()
+	ui.destinationEntry.SetPlaceHolder("Select a folder on your USB drive")
+	ui.filterSelect = widget.NewSelect([]string{"All genres"}, func(string) {
+		ui.renderAlbums()
+	})
+	ui.albumList = widget.NewCheckGroup(nil, ui.selectionChanged)
+	ui.statusLabel = widget.NewLabel("Choose your music library folder, then scan for albums.")
+	ui.progressBar = widget.NewProgressBar()
+	ui.scanButton = widget.NewButton("Scan albums", ui.scanAlbums)
+	ui.copyButton = widget.NewButton("Copy selected albums", ui.copySelected)
+	ui.cancelButton = widget.NewButton("Cancel copy", ui.cancelCurrentCopy)
+	ui.selectVisible = widget.NewButton("Select visible", ui.selectVisibleAlbums)
+	ui.clearSelection = widget.NewButton("Clear selection", ui.clearAlbums)
+
+	ui.sourceBrowse = widget.NewButton("Browse...", func() {
+		ui.browseFolder("Select your music library folder", ui.sourceEntry)
+	})
+	ui.destinationBrowse = widget.NewButton("Browse...", func() {
+		ui.browseFolder("Select a folder on your USB drive", ui.destinationEntry)
+	})
+	genreRow := container.NewHBox(
+		widget.NewLabel("Genre:"),
+		ui.filterSelect,
+		ui.selectVisible,
+		ui.clearSelection,
+	)
+	copyRow := container.NewHBox(ui.copyButton, ui.cancelButton)
+	top := container.NewVBox(
+		widget.NewLabelWithStyle("Copy MP3 album folders to a USB drive", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabel("Music library folder"),
+		container.NewBorder(nil, nil, nil, ui.sourceBrowse, ui.sourceEntry),
+		ui.scanButton,
+		widget.NewLabel("USB drive destination folder"),
+		container.NewBorder(nil, nil, nil, ui.destinationBrowse, ui.destinationEntry),
+		widget.NewLabel("Filter albums by genre and select albums to copy."),
+		genreRow,
+	)
+	bottom := container.NewVBox(copyRow, ui.progressBar, ui.statusLabel)
+	ui.window.SetContent(container.NewBorder(top, bottom, nil, nil, container.NewVScroll(ui.albumList)))
+	ui.setControlsEnabled(true)
 }
 
-func (ui *copierWindow) browseDestination() {
-	dialog := &walk.FileDialog{Title: "Select a folder on your USB drive", InitialDirPath: ui.destinationEntry.Text()}
-	accepted, err := dialog.ShowBrowseFolder(ui.mainWindow)
-	if err != nil {
-		ui.showError(err)
-		return
-	}
-	if accepted {
-		ui.destinationEntry.SetText(dialog.FilePath)
-	}
+func (ui *copierWindow) browseFolder(title string, entry *widget.Entry) {
+	chooser := dialog.NewFolderOpen(func(uri fyne.ListableURI, err error) {
+		if err != nil {
+			ui.showError(err)
+			return
+		}
+		if uri != nil {
+			entry.SetText(uri.Path())
+		}
+	}, ui.window)
+	chooser.SetTitleText(title)
+	chooser.Resize(fyne.NewSize(720, 480))
+	chooser.Show()
 }
 
 func (ui *copierWindow) scanAlbums() {
-	root := strings.TrimSpace(ui.sourceEntry.Text())
+	root := strings.TrimSpace(ui.sourceEntry.Text)
 	if root == "" {
 		ui.showError(errors.New("choose a music library folder"))
 		return
 	}
-	ui.setControlsEnabled(false)
+	ui.setBusy(true)
 	ui.statusLabel.SetText("Scanning MP3 tags...")
 
 	go func() {
 		result, err := ScanAlbums(root)
-		ui.mainWindow.Synchronize(func() {
-			ui.setControlsEnabled(true)
+		fyne.Do(func() {
+			ui.setBusy(false)
 			if err != nil {
 				ui.showError(err)
 				ui.statusLabel.SetText("Album scan failed.")
@@ -154,11 +135,7 @@ func (ui *copierWindow) scanAlbums() {
 			ui.albums = result.Albums
 			ui.selected = make(map[string]bool)
 			ui.updateGenreOptions()
-			if err := ui.renderAlbums(); err != nil {
-				ui.showError(err)
-				ui.statusLabel.SetText("Could not display scanned albums.")
-				return
-			}
+			ui.renderAlbums()
 			message := fmt.Sprintf("Found %d album folders.", len(ui.albums))
 			if len(result.Warnings) > 0 {
 				message += fmt.Sprintf(" %d MP3 tag(s) could not be read; those albums may appear as Unknown.", len(result.Warnings))
@@ -182,48 +159,51 @@ func (ui *copierWindow) updateGenreOptions() {
 	sort.Slice(options[1:], func(i, j int) bool {
 		return strings.ToLower(options[i+1]) < strings.ToLower(options[j+1])
 	})
-	ui.filterCombo.SetModel(options)
-	ui.filterCombo.SetCurrentIndex(0)
+	ui.filterSelect.SetOptions(options)
+	ui.filterSelect.SetSelected("All genres")
 }
 
-func (ui *copierWindow) renderAlbums() error {
-	selectedGenre := ui.filterCombo.Text()
+func (ui *copierWindow) renderAlbums() {
+	selectedGenre := ui.filterSelect.Selected
 	ui.visible = make([]Album, 0)
-	items := make([]string, 0)
+	options := make([]string, 0)
 	for _, album := range ui.albums {
 		if selectedGenre != "All genres" && !containsGenre(album.Genres, selectedGenre) {
 			continue
 		}
 		ui.visible = append(ui.visible, album)
-		items = append(items, fmt.Sprintf("%s  |  %s  |  %d MP3s", album.Name, strings.Join(album.Genres, ", "), album.MP3Count))
+		options = append(options, fmt.Sprintf("%s  |  %s  |  %d MP3s",
+			album.Name, strings.Join(album.Genres, ", "), album.MP3Count))
 	}
 
-	ui.updatingList = true
-	defer func() { ui.updatingList = false }()
-	if err := ui.albumList.SetModel(items); err != nil {
-		return err
-	}
-	indexes := make([]int, 0)
+	selected := make([]string, 0)
 	for i, album := range ui.visible {
 		if ui.selected[album.Path] {
-			indexes = append(indexes, i)
+			selected = append(selected, options[i])
 		}
 	}
-	ui.albumList.SetSelectedIndexes(indexes)
-	return nil
+	ui.updatingList = true
+	ui.albumList.Options = options
+	ui.albumList.SetSelected(selected)
+	ui.albumList.Refresh()
+	ui.updatingList = false
 }
 
-func (ui *copierWindow) selectionChanged() {
+func (ui *copierWindow) selectionChanged(options []string) {
 	if ui.updatingList {
 		return
 	}
 	for _, album := range ui.visible {
 		ui.selected[album.Path] = false
 	}
-	for _, index := range ui.albumList.SelectedIndexes() {
-		if index >= 0 && index < len(ui.visible) {
-			ui.selected[ui.visible[index].Path] = true
-		}
+	selected := make(map[string]bool, len(options))
+	for _, option := range options {
+		selected[option] = true
+	}
+	for _, album := range ui.visible {
+		label := fmt.Sprintf("%s  |  %s  |  %d MP3s",
+			album.Name, strings.Join(album.Genres, ", "), album.MP3Count)
+		ui.selected[album.Path] = selected[label]
 	}
 }
 
@@ -231,16 +211,12 @@ func (ui *copierWindow) selectVisibleAlbums() {
 	for _, album := range ui.visible {
 		ui.selected[album.Path] = true
 	}
-	if err := ui.renderAlbums(); err != nil {
-		ui.showError(err)
-	}
+	ui.renderAlbums()
 }
 
 func (ui *copierWindow) clearAlbums() {
 	ui.selected = make(map[string]bool)
-	if err := ui.renderAlbums(); err != nil {
-		ui.showError(err)
-	}
+	ui.renderAlbums()
 }
 
 func (ui *copierWindow) copySelected() {
@@ -254,7 +230,7 @@ func (ui *copierWindow) copySelected() {
 		ui.showError(errors.New("select at least one album to copy"))
 		return
 	}
-	destination := strings.TrimSpace(ui.destinationEntry.Text())
+	destination := strings.TrimSpace(ui.destinationEntry.Text)
 	if destination == "" {
 		ui.showError(errors.New("choose a folder on your USB drive"))
 		return
@@ -267,30 +243,36 @@ func (ui *copierWindow) copySelected() {
 	if len(existing) > 0 {
 		message := "These album folders already exist and matching files will be overwritten:\n\n" +
 			strings.Join(existing, "\n") + "\n\nContinue?"
-		if walk.MsgBox(ui.mainWindow, "Overwrite existing files?", message,
-			walk.MsgBoxYesNo|walk.MsgBoxIconWarning) != walk.DlgCmdYes {
-			return
-		}
+		dialog.ShowConfirm("Overwrite existing files?", message, func(confirmed bool) {
+			if confirmed {
+				ui.startCopy(destination, chosen)
+			}
+		}, ui.window)
+		return
 	}
+	ui.startCopy(destination, chosen)
+}
 
+func (ui *copierWindow) startCopy(destination string, chosen []Album) {
 	ctx, cancel := context.WithCancel(context.Background())
 	ui.cancelCopy = cancel
-	ui.setControlsEnabled(false)
-	ui.cancelButton.SetEnabled(true)
+	ui.setBusy(true)
+	ui.cancelButton.Enable()
 	ui.progressBar.SetValue(0)
 	ui.statusLabel.SetText("Preparing to copy...")
 
 	go func() {
 		err := CopyAlbums(ctx, destination, chosen, func(update CopyProgress) {
-			ui.mainWindow.Synchronize(func() {
-				ui.progressBar.SetValue(update.AlbumIndex * 100 / update.AlbumCount)
-				ui.statusLabel.SetText(fmt.Sprintf("Copying album %d of %d: %s", update.AlbumIndex+1, update.AlbumCount, update.AlbumName))
+			fyne.Do(func() {
+				ui.progressBar.SetValue(float64(update.AlbumIndex) / float64(update.AlbumCount))
+				ui.statusLabel.SetText(fmt.Sprintf("Copying album %d of %d: %s",
+					update.AlbumIndex+1, update.AlbumCount, update.AlbumName))
 			})
 		})
-		ui.mainWindow.Synchronize(func() {
+		fyne.Do(func() {
 			cancel()
 			ui.cancelCopy = nil
-			ui.setControlsEnabled(true)
+			ui.setBusy(false)
 			if err != nil {
 				if errors.Is(err, context.Canceled) {
 					ui.statusLabel.SetText("Copy cancelled.")
@@ -300,7 +282,7 @@ func (ui *copierWindow) copySelected() {
 				}
 				return
 			}
-			ui.progressBar.SetValue(100)
+			ui.progressBar.SetValue(1)
 			ui.statusLabel.SetText(fmt.Sprintf("Copied %d album(s) to %s.", len(chosen), destination))
 		})
 	}()
@@ -309,39 +291,43 @@ func (ui *copierWindow) copySelected() {
 func (ui *copierWindow) cancelCurrentCopy() {
 	if ui.cancelCopy != nil {
 		ui.cancelCopy()
-		ui.cancelButton.SetEnabled(false)
+		ui.cancelButton.Disable()
 		ui.statusLabel.SetText("Cancelling copy...")
 	}
 }
 
+func (ui *copierWindow) setBusy(busy bool) {
+	ui.setControlsEnabled(!busy)
+}
+
 func (ui *copierWindow) setControlsEnabled(enabled bool) {
-	ui.sourceEntry.SetEnabled(enabled)
-	ui.sourceBrowse.SetEnabled(enabled)
-	ui.scanButton.SetEnabled(enabled)
-	ui.destinationEntry.SetEnabled(enabled)
-	ui.destinationBrowse.SetEnabled(enabled)
-	ui.filterCombo.SetEnabled(enabled)
-	ui.albumList.SetEnabled(enabled)
-	ui.selectVisible.SetEnabled(enabled)
-	ui.clearSelection.SetEnabled(enabled)
-	ui.copyButton.SetEnabled(enabled)
-	ui.cancelButton.SetEnabled(!enabled && ui.cancelCopy != nil)
+	ui.sourceEntry.Disable()
+	ui.destinationEntry.Disable()
+	ui.sourceBrowse.Disable()
+	ui.destinationBrowse.Disable()
+	ui.filterSelect.Disable()
+	ui.albumList.Disable()
+	ui.scanButton.Disable()
+	ui.copyButton.Disable()
+	ui.selectVisible.Disable()
+	ui.clearSelection.Disable()
+	if enabled {
+		ui.sourceEntry.Enable()
+		ui.destinationEntry.Enable()
+		ui.sourceBrowse.Enable()
+		ui.destinationBrowse.Enable()
+		ui.filterSelect.Enable()
+		ui.albumList.Enable()
+		ui.scanButton.Enable()
+		ui.copyButton.Enable()
+		ui.selectVisible.Enable()
+		ui.clearSelection.Enable()
+	}
+	if ui.cancelCopy == nil {
+		ui.cancelButton.Disable()
+	}
 }
 
 func (ui *copierWindow) showError(err error) {
-	walk.MsgBox(ui.mainWindow, "Music Album Copier", err.Error(), walk.MsgBoxOK|walk.MsgBoxIconError)
-}
-
-func existingAlbumFolders(destination string, albums []Album) ([]string, error) {
-	var existing []string
-	for _, album := range albums {
-		path := filepath.Join(destination, album.Name)
-		_, err := os.Stat(path)
-		if err == nil {
-			existing = append(existing, album.Name)
-		} else if !os.IsNotExist(err) {
-			return nil, fmt.Errorf("check destination %s: %w", path, err)
-		}
-	}
-	return existing, nil
+	dialog.ShowError(err, ui.window)
 }
