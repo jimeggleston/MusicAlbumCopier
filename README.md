@@ -1,8 +1,8 @@
 # Music Album Copier
 
-A cross-platform desktop app for scanning MP3 albums by genre and copying selected album folders to a USB drive. The Rust/Tauri implementation is in [`tauri/`](./tauri/); the original Go implementation remains at the repository root as a reference while the port is validated.
+A cross-platform desktop app for scanning MP3 albums by genre and copying selected album folders to a USB drive.
 
-## Run the Tauri app
+## Requirements
 
 Install Node.js 20.19 or newer, Rust 1.85 or newer, and the platform's Tauri prerequisites.
 
@@ -12,23 +12,29 @@ On Debian, install the desktop build dependencies:
 sudo apt install build-essential curl wget file libssl-dev libxdo-dev librsvg2-dev libayatana-appindicator3-dev libwebkit2gtk-4.1-dev
 ```
 
-Then run from the Tauri project folder:
+Windows builds need the Microsoft C++ Build Tools, Rust's MSVC toolchain, Node.js, and the WebView2 runtime.
+
+## Run and build
+
+Install frontend dependencies:
 
 ```sh
-cd tauri
-npm install
+npm ci
+```
+
+Run in development mode:
+
+```sh
 npm run tauri dev
 ```
 
-To create a release bundle for the current platform:
+Build a release bundle for the current platform:
 
 ```sh
 npm run tauri build
 ```
 
-Windows builds need the Microsoft C++ Build Tools, Rust's MSVC toolchain, Node.js, and the WebView2 runtime. Build each platform on that platform (or use a matching CI runner); Linux and Windows have different native WebView and installer dependencies.
-
-On Windows, run `npm run tauri dev` during development and `npm run tauri build` to create the Windows installer.
+Build each platform on that platform (or use a matching CI runner); Linux and Windows have different native WebView and installer dependencies.
 
 ## Features
 
