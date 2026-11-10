@@ -1,0 +1,314 @@
+:root {
+  font-family: Inter, "Segoe UI", sans-serif;
+  color: #172033;
+  background: #f5f7fa;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 520px;
+  height: 100vh;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 980px);
+  height: 100vh;
+  min-height: 600px;
+  margin: 0 auto;
+  padding: 28px 34px 22px;
+  gap: 20px;
+  overflow: hidden;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brand-mark {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border-radius: 14px;
+  color: white;
+  background: #3156a4;
+  font-size: 30px;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: 23px;
+  letter-spacing: -0.02em;
+}
+
+.app-header p,
+.list-heading p {
+  margin-top: 4px;
+  color: #6a7485;
+  font-size: 13px;
+}
+
+.path-section,
+.albums-section,
+.app-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.albums-section {
+  flex: 1;
+  min-height: 0;
+}
+
+.path-section > label,
+.filter label {
+  color: #4a5568;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.path-section > label:not(:first-child) {
+  margin-top: 6px;
+}
+
+.path-row {
+  display: flex;
+  gap: 8px;
+}
+
+input[type="text"],
+select {
+  min-width: 0;
+  height: 38px;
+  padding: 0 11px;
+  border: 1px solid #d5dce7;
+  border-radius: 7px;
+  outline: none;
+  background: white;
+  color: #172033;
+}
+
+.path-row input {
+  flex: 1;
+}
+
+input:focus,
+select:focus {
+  border-color: #5278c6;
+  box-shadow: 0 0 0 3px rgb(49 86 164 / 12%);
+}
+
+.button {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.button:disabled {
+  cursor: default;
+  opacity: 0.48;
+}
+
+.primary {
+  color: #fff;
+  background: #3156a4;
+}
+
+.primary:hover:not(:disabled) {
+  background: #274889;
+}
+
+.secondary {
+  border-color: #d5dce7;
+  background: #fff;
+  color: #344055;
+}
+
+.secondary:hover:not(:disabled) {
+  background: #f0f3f8;
+}
+
+.text-button {
+  padding: 0 8px;
+  background: transparent;
+  color: #3156a4;
+}
+
+.text-button:hover:not(:disabled) {
+  background: #e9eef8;
+}
+
+.list-heading,
+.selection-actions,
+.copy-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+h2 {
+  font-size: 17px;
+}
+
+.filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter select {
+  min-width: 150px;
+}
+
+.selection-actions {
+  min-height: 30px;
+  color: #6a7485;
+  font-size: 12px;
+}
+
+.selection-actions > div {
+  display: flex;
+  gap: 4px;
+}
+
+.album-list {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  overflow: auto;
+  border: 1px solid #dfe4ec;
+  border-radius: 9px;
+  background: #fff;
+}
+
+.album-row {
+  display: flex;
+  align-items: center;
+  min-height: 54px;
+  padding: 8px 13px;
+  gap: 12px;
+  border-bottom: 1px solid #edf0f4;
+  cursor: pointer;
+}
+
+.album-row:last-child {
+  border-bottom: 0;
+}
+
+.album-row:hover {
+  background: #f8faff;
+}
+
+.album-row input {
+  width: 16px;
+  height: 16px;
+  accent-color: #3156a4;
+}
+
+.album-details {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.album-details strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.album-metadata {
+  color: #707b8b;
+  font-size: 12px;
+}
+
+.empty-state {
+  margin: auto;
+  padding: 28px 16px;
+  color: #7a8493;
+  text-align: center;
+  font-size: 13px;
+}
+
+.app-footer {
+  gap: 8px;
+}
+
+.copy-actions {
+  justify-content: flex-start;
+}
+
+progress {
+  width: 100%;
+  height: 8px;
+  accent-color: #3156a4;
+}
+
+#status {
+  min-height: 18px;
+  color: #626d7d;
+  font-size: 12px;
+}
+
+#status.error {
+  color: #b42318;
+}
+
+body.scanning,
+body.scanning * {
+  cursor: wait !important;
+}
+
+@media (max-width: 680px) {
+  .app {
+    padding: 20px 16px;
+  }
+
+  .list-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .filter {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .filter select {
+    flex: 1;
+  }
+
+  .selection-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

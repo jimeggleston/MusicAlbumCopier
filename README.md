@@ -1,43 +1,41 @@
 # Music Album Copier
 
-A cross-platform desktop app for selecting album folders from a music library and copying them to a USB drive for car playback. It uses the same graphical interface on Windows and Linux (including Debian). Albums are the immediate subfolders of the selected library. The app scans MP3 tags to collect genres; albums whose MP3 files have no readable genre are listed as **Unknown**.
+A cross-platform desktop app for scanning MP3 albums by genre and copying selected album folders to a USB drive. The Rust/Tauri implementation is in [`tauri/`](./tauri/); the original Go implementation remains at the repository root as a reference while the port is validated.
 
-## Linux (Debian)
+## Run the Tauri app
 
-Install Go and the Fyne build dependencies:
+Install Node.js 20.19 or newer, Rust 1.85 or newer, and the platform's Tauri prerequisites.
 
-```sh
-sudo apt install gcc pkg-config libgl1-mesa-dev xorg-dev libwayland-dev libxkbcommon-dev
-```
-
-Open a terminal in the project folder and run:
+On Debian, install the desktop build dependencies:
 
 ```sh
-go run .
+sudo apt install build-essential curl wget file libssl-dev libxdo-dev librsvg2-dev libayatana-appindicator3-dev libwebkit2gtk-4.1-dev
 ```
 
-Choose your music library, scan it, filter by genre, select albums, and choose a destination folder on the USB drive. Use the Cancel copy button to stop a copy in progress.
-
-To build a Linux executable:
+Then run from the Tauri project folder:
 
 ```sh
-go build -o MusicAlbumCopier .
+cd tauri
+npm install
+npm run tauri dev
 ```
 
-## Windows
+To create a release bundle for the current platform:
 
-Install Go and a GCC-compatible C compiler for CGO (for example, MinGW-w64), then run the desktop app:
-
-```powershell
-go run .
+```sh
+npm run tauri build
 ```
 
-Or build a Windows executable on Windows:
+Windows builds need the Microsoft C++ Build Tools, Rust's MSVC toolchain, Node.js, and the WebView2 runtime. Build each platform on that platform (or use a matching CI runner); Linux and Windows have different native WebView and installer dependencies.
 
-```powershell
-go build -o MusicAlbumCopier.exe .
-```
+On Windows, run `npm run tauri dev` during development and `npm run tauri build` to create the Windows installer.
 
-## Copying albums
+## Features
 
-The entire album folder is copied, including non-MP3 files and nested subfolders. If an album folder already exists at the destination, the app asks before replacing files with matching names. A USB drive should be formatted with a file system that supports the album files' sizes (exFAT or NTFS for files larger than 4 GB).
+- Scans immediate library subfolders for nested MP3s and reads their genres.
+- Lists albums without readable genre tags as **Unknown**.
+- Filters by genre and supports selecting multiple albums.
+- Copies the complete album folder, including non-MP3 files and nested folders.
+- Confirms before overwriting matching files and supports cancelling a copy.
+
+The USB drive should use a file system that supports the album files' sizes (exFAT or NTFS for files larger than 4 GB).

@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f5f7fa" />
+    <title>Music Album Copier</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <script type="module" src="/src/main.ts"></script>
+  </head>
+  <body>
+    <main class="app">
+      <header class="app-header">
+        <div class="brand-mark" aria-hidden="true">♫</div>
+        <div>
+          <h1>Music Album Copier</h1>
+          <p>Copy album folders to a USB drive for car playback</p>
+        </div>
+      </header>
+
+      <section class="path-section" aria-label="Folders">
+        <label for="library-path">Music library folder</label>
+        <div class="path-row">
+          <input id="library-path" type="text" placeholder="Choose your music library folder" />
+          <button id="browse-library" class="button secondary" type="button">Browse...</button>
+        </div>
+        <button id="scan" class="button primary" type="button">Scan albums</button>
+
+        <label for="destination-path">USB drive destination folder</label>
+        <div class="path-row">
+          <input id="destination-path" type="text" placeholder="Choose a folder on your USB drive" />
+          <button id="browse-destination" class="button secondary" type="button">Browse...</button>
+        </div>
+      </section>
+
+      <section class="albums-section" aria-label="Albums">
+        <div class="list-heading">
+          <div>
+            <h2>Albums</h2>
+            <p>Filter by genre, then select the albums to copy.</p>
+          </div>
+          <div class="filter">
+            <label for="genre-filter">Genre</label>
+            <select id="genre-filter" disabled>
+              <option>All genres</option>
+            </select>
+          </div>
+        </div>
+        <div class="selection-actions">
+          <span id="album-count">No albums scanned</span>
+          <div>
+            <button id="select-visible" class="button text-button" type="button" disabled>Select visible</button>
+            <button id="clear-selection" class="button text-button" type="button" disabled>Clear selection</button>
+          </div>
+        </div>
+        <div id="album-list" class="album-list" role="group" aria-label="Scanned albums">
+          <p class="empty-state">Choose a music library folder and scan it to list albums.</p>
+        </div>
+      </section>
+
+      <footer class="app-footer">
+        <div class="copy-actions">
+          <button id="copy" class="button primary" type="button" disabled>Copy selected albums</button>
+          <button id="cancel-copy" class="button secondary" type="button" disabled>Cancel copy</button>
+        </div>
+        <progress id="copy-progress" max="100" value="0" aria-label="Copy progress"></progress>
+        <p id="status" role="status" aria-live="polite">Choose your music library folder, then scan for albums.</p>
+      </footer>
+    </main>
+  </body>
+</html>
