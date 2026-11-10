@@ -2,7 +2,23 @@
 
 A cross-platform desktop app for scanning MP3 albums by genre and copying selected album folders to a USB drive.
 
+## Download and install
+
+Download an installer for your platform from the [latest GitHub release](https://github.com/jimeggleston/MusicAlbumCopier/releases/latest):
+
+- **Debian, Ubuntu, and MX Linux:** download [Music.Album.Copier_0.1.0_amd64.deb](https://github.com/jimeggleston/MusicAlbumCopier/releases/download/v0.1.0/Music.Album.Copier_0.1.0_amd64.deb), then install it with:
+
+  ```sh
+  sudo apt install ./Music.Album.Copier_0.1.0_amd64.deb
+  ```
+
+  Launch **Music Album Copier** from your applications menu.
+- **Other Linux distributions:** download the [AppImage](https://github.com/jimeggleston/MusicAlbumCopier/releases/download/v0.1.0/Music.Album.Copier_0.1.0_amd64.AppImage), make it executable with `chmod +x Music.Album.Copier_0.1.0_amd64.AppImage`, then run `./Music.Album.Copier_0.1.0_amd64.AppImage`. Fedora-based distributions can use the [RPM package](https://github.com/jimeggleston/MusicAlbumCopier/releases/download/v0.1.0/Music.Album.Copier-0.1.0-1.x86_64.rpm).
+- **Windows:** download and open the [64-bit MSI installer](https://github.com/jimeggleston/MusicAlbumCopier/releases/download/v0.1.0/Music.Album.Copier_0.1.0_x64_en-US.msi), then follow the installation prompts.
+
 ## Requirements
+
+The requirements below are for building from source; prebuilt installers are available above.
 
 Install Node.js 20.19 or newer, Rust 1.85 or newer, and the platform's Tauri prerequisites.
 
